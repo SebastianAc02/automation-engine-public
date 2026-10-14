@@ -1,0 +1,9 @@
+nombre: ejemplo
+motor: httpx
+descripcion: receta de ejemplo, trae el titulo de una pagina de prueba
+pasos:
+  - accion: navegar
+    url: "https://example.com/{{data.ruta}}"
+  - accion: extraer
+    selector: titulo
+    patron: "<title>(.*?)</title>"

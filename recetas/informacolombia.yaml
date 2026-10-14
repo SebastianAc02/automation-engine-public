@@ -1,0 +1,38 @@
+nombre: informacolombia
+descripcion: Obtener telefono y NIT de una empresa desde InformaColombia, entrando por el buscador de razon social en vez de la URL directa (evita el bloqueo por "llegar teletransportado")
+motor: camoufox
+pasos:
+  - accion: navegar
+    url: "https://www.informacolombia.com/directorio-empresas"
+
+  - accion: clic
+    selector: "#razonsocial"
+
+  - accion: rellenar
+    selector: "#razonsocial"
+    valor: "{{data.query}}"
+
+  - accion: esperar
+    segundos: 1
+
+  - accion: clic
+    selector: "#boton_buscar"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: clic
+    selector: 'a[href*="informacion-empresa"]'
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: extraer
+    selector: body
+    salida: telefono
+    patron: 'Tel[ée]fono[\s\S]{0,30}?(\d{7,})'
+
+  - accion: extraer
+    selector: body
+    salida: nit
+    patron: 'NIT[\s\S]{0,30}?(\d{6,})'

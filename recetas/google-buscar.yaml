@@ -1,0 +1,27 @@
+nombre: google-buscar
+descripcion: "Buscar en Google. La causa real del bloqueo no era el IP (probado: el mismo IP pasa limpio en Chrome real) ni el fingerprint (probado: os=macos + geoip ya venia puesto y seguia bloqueado) sino el navegador efimero sin cookies; el fix es un perfil persistente (persistent_context) que acumula cookies reales de Google entre corridas, igual que un navegador humano"
+motor: camoufox
+perfil: perfiles/google
+pasos:
+  - accion: navegar
+    url: "https://www.google.com/"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: rellenar
+    selector: 'textarea[name="q"], input[name="q"]'
+    valor: "{{data.query}}"
+
+  - accion: esperar
+    segundos: 0.5
+
+  - accion: presionar
+    selector: 'textarea[name="q"], input[name="q"]'
+    valor: "Enter"
+
+  - accion: esperar
+    segundos: 2.5
+
+  - accion: extraer
+    selector: body

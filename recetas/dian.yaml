@@ -1,0 +1,59 @@
+nombre: dian
+motor: camoufox
+descripcion: >
+  Obtener los ultimos 4 digitos del celular real registrado en la DIAN, via el
+  flujo de "olvido su contrasena" (muestra el celular enmascarado, ej: ******2263).
+  OJO: el ultimo paso (extraer) no esta verificado en vivo con el selector actual;
+  la corrida de prueba se topo con el boton "Continuar" deshabilitado (probable
+  rate-limit de la DIAN tras varios intentos seguidos contra la misma cedula) antes
+  de poder confirmar el selector de extraccion contra la pantalla final real. No
+  correr en loop ni contra la misma cedula repetidas veces: es un intento real de
+  recuperacion de clave contra la cuenta de una persona real, no un scrape de
+  pagina publica.
+pasos:
+  - accion: navegar
+    url: "https://muisca.dian.gov.co/WebIdentidadLogin/"
+
+  - accion: ejecutar_js
+    script: |
+      (() => {
+        return new Promise((resolve) => {
+          let intentos = 0;
+          const revisar = () => {
+            const overlay = document.querySelector('.cdk-overlay-pane');
+            const boton = overlay && overlay.querySelector('button.mat-icon-button');
+            if (boton) {
+              boton.click();
+              resolve(true);
+            } else if (intentos++ < 20) {
+              setTimeout(revisar, 200);
+            } else {
+              resolve(false);
+            }
+          };
+          revisar();
+        });
+      })()
+
+  - accion: clic
+    selector: 'role=link[name="¿Olvidó su contraseña?"]'
+
+  - accion: clic
+    selector: '.mat-select-trigger'
+
+  - accion: clic
+    selector: 'role=option[name="Cédula de ciudadanía"]'
+
+  - accion: rellenar
+    selector: 'role=textbox[name="Escriba el número de documento"]'
+    valor: "{{data.cedula}}"
+
+  - accion: clic
+    selector: 'role=button[name="Continuar"]'
+
+  - accion: clic
+    selector: 'role=button[name="Actualizar contraseña y generar firma"]'
+
+  - accion: extraer
+    selector: 'div:has-text("Mensaje de texto") .options-value'
+    patron: '\d{4}'

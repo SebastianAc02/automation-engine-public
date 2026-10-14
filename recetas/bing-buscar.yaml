@@ -1,0 +1,12 @@
+nombre: bing-buscar
+descripcion: "Buscar en Bing (Google bloquea esta red a nivel IP, sin importar tecnica). Evitar operadores tipo site: entre comillas, dispara el captcha propio de Bing; usar texto natural (nombre + palabra clave del sitio)"
+motor: camoufox
+pasos:
+  - accion: navegar
+    url: "https://www.bing.com/search?q={{data.query}}"
+
+  - accion: esperar
+    segundos: 1
+
+  - accion: extraer
+    selector: "#b_content"

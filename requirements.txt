@@ -1,0 +1,12 @@
+pydantic
+pydantic-settings
+pyyaml
+httpx
+playwright
+camoufox[geoip]
+loguru
+typer
+tenacity
+anthropic
+pytest
+python-dotenv

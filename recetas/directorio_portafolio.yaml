@@ -1,0 +1,49 @@
+nombre: directorio_portafolio
+motor: camoufox
+descripcion: >
+  Busca una empresa en empresas.portafolio.co y verifica el NIT contra el
+  esperado (con tolerancia de digito de verificacion). Requiere data.nombre
+  y data.nit.
+pasos:
+  - accion: navegar
+    url: "https://empresas.portafolio.co/"
+
+  - accion: clic
+    selector: 'input[name="q"]:visible'
+
+  - accion: rellenar
+    selector: 'input[name="q"]:visible'
+    valor: "{{data.nombre}}"
+
+  - accion: esperar
+    segundos: 0.8
+
+  - accion: clic
+    selector: "button.btn_buscar:visible"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: condicional
+    si_vacio: 'a[href$=".html"]'
+    pasos:
+      - accion: resolver_captcha
+      - accion: esperar
+        segundos: 2
+
+  - accion: repetir_hasta
+    selector: 'a[href$=".html"]'
+    max_intentos: 2
+    parar_si:
+      campo: nit
+      igual_a: "{{data.nit}}"
+      tolerancia_digito_extra: true
+    pasos:
+      - accion: extraer
+        selector: body
+        patron: "NIT[\\s\\S]{0,30}?(\\d{6,})"
+        salida: nit
+      - accion: extraer
+        selector: body
+        patron: "TEL[ÉE]FONO:\\s*(\\d{7,})"
+        salida: telefono

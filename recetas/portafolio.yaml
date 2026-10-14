@@ -1,0 +1,38 @@
+nombre: portafolio
+descripcion: Obtener telefono y NIT de una empresa desde Portafolio.co, entrando por el buscador en vez de la URL directa (evita el bloqueo por "llegar teletransportado"; comparte backend con eInforma)
+motor: camoufox
+pasos:
+  - accion: navegar
+    url: "https://empresas.portafolio.co/"
+
+  - accion: clic
+    selector: 'input[name="q"]:visible'
+
+  - accion: rellenar
+    selector: 'input[name="q"]:visible'
+    valor: "{{data.query}}"
+
+  - accion: esperar
+    segundos: 1
+
+  - accion: clic
+    selector: "button.btn_buscar:visible"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: clic
+    selector: 'a[href$=".html"]'
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: extraer
+    selector: body
+    salida: telefono
+    patron: 'TEL[ÉE]FONO:\s*(\d{7,})'
+
+  - accion: extraer
+    selector: body
+    salida: nit
+    patron: 'NIT:\s*(\d{6,})'

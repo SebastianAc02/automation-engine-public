@@ -1,0 +1,90 @@
+nombre: rues_representante_legal
+motor: camoufox
+descripcion: >
+  Trae el bloque completo de "Representante legal" de rues.org.co
+  (principal + suplente + facultades, o el formato narrativo "CERTIFICA...
+  GERENCIA:..." que usan otras camaras), que el scraper de Render no
+  expone (solo trae un representante y ningun suplente). El formato de
+  esta seccion varia por empresa/camara de comercio, asi que no se filtra
+  por una palabra clave especifica: se extrae la pagina completa despues
+  de un tiempo de asentamiento y Claude decide que hay adentro (accion
+  estructurar_llm), todo dentro del engine, sin codigo Python por fuera de
+  la receta.
+pasos:
+  # OJO: no ir directo a /buscar/RM/{nit}. Esa URL deja el estado de la SPA
+  # mal inicializado (se ve "cargando" indefinido o "Informacion no
+  # disponible" con mucha frecuencia). El flujo real es: entrar a la home,
+  # cerrar el aviso de seguridad, escribir el nit y darle a Buscar.
+  - accion: navegar
+    url: "https://www.rues.org.co/"
+
+  - accion: esperar_texto
+    patron: "Aviso importante"
+    segundos: 10
+
+  - accion: ejecutar_js
+    # clic por JS puro en vez de clic real de Playwright: el modal de
+    # SweetAlert2 tiene una animacion de entrada que en modo visible hace
+    # que el clic "real" (con chequeo de visibilidad) se cuelgue esperando
+    # a que se estabilice. document.click() no tiene ese problema.
+    script: "document.querySelector('.swal2-close')?.click()"
+
+  - accion: rellenar
+    selector: 'input[placeholder="Digite su búsqueda"]'
+    valor: "{{data.nit}}"
+
+  - accion: clic
+    # hay un boton "Buscar" duplicado solo para mobile (d-sm-none), oculto en
+    # desktop; :visible toma el que realmente se ve en este viewport.
+    selector: 'button[type="submit"]:visible'
+
+  - accion: esperar_texto
+    patron: "Ver información"
+    segundos: 15
+
+  - accion: clic
+    selector: 'text=Ver información'
+
+  - accion: esperar_texto
+    patron: "Representante legal"
+    segundos: 15
+
+  - accion: ejecutar_js
+    # la pagina de detalle carga mal si no se hace scroll al llegar (parece
+    # necesitar que el contenido entre en el viewport para renderizar bien).
+    script: "window.scrollTo(0, 400)"
+
+  - accion: esperar
+    segundos: 1
+
+  - accion: clic
+    selector: 'text=Representante legal'
+
+  - accion: esperar
+    segundos: 5
+
+  - accion: extraer
+    selector: "body"
+    patron: "(?:Propietario / Establecimiento|Representante legal)([\\s\\S]*?)Servicios disponibles"
+    salida: bloque_representante_legal
+
+  - accion: estructurar_llm
+    selector: bloque_representante_legal
+    salida: representantes
+    script: >
+      Extraes los representantes de una empresa colombiana a partir del
+      texto crudo de la pestana "Representante legal" del RUES
+      (rues.org.co). El formato VARIA segun la camara de comercio: a veces
+      trae bloques marcados "REPRESENTACION LEGAL (PRINCIPALES)",
+      "REPRESENTACION LEGAL (SUPLENTES)" y "FACULTADES"; otras veces trae
+      un texto narrativo tipo "CERTIFICA... GERENCIA: La Representacion
+      Legal de la sociedad..."; a veces dice literalmente "Informacion no
+      disponible" (en ese caso responde con una lista vacia). Lee el texto
+      completo (incluidas las facultades/certificacion) para inferir el
+      cargo real de cada persona mencionada -no asumas "Gerente" por
+      defecto, usa lo que el texto realmente diga-, y para distinguir al
+      representante legal principal del suplente. Si el texto no tiene
+      ninguna persona identificable, responde con contactos: [].
+      Responde SOLO con JSON valido, sin texto adicional ni markdown, con
+      esta forma exacta:
+      {"contactos": [{"nombre": str, "apellido": str, "cargo": str, "cargo_categoria": str (uno de: rep_legal, rep_legal_suplente, gerente, subgerente, dueno, tecnico, financiero, operativo, comercial, desconocido), "documento": str (solo digitos, vacio si no aparece), "es_rep_legal": bool (true solo para el representante legal principal)}]}

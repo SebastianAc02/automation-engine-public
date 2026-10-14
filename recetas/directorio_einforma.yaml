@@ -1,0 +1,52 @@
+nombre: directorio_einforma
+motor: camoufox
+descripcion: >
+  Busca una empresa en directorio-empresas.einforma.co y verifica el NIT
+  contra el esperado. OJO: #search existe en el DOM pero es un buscador
+  oculto de un dropdown del header (display:none); el buscador real y
+  visible de la pagina es #search2, dentro de .r_searchbox. Requiere
+  data.nombre y data.nit.
+pasos:
+  - accion: navegar
+    url: "https://directorio-empresas.einforma.co/"
+
+  - accion: clic
+    selector: "#search2"
+
+  - accion: rellenar
+    selector: "#search2"
+    valor: "{{data.nombre}}"
+
+  - accion: esperar
+    segundos: 0.8
+
+  - accion: presionar
+    selector: "#search2"
+    valor: "Enter"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: condicional
+    si_vacio: 'a[href*="informacion-empresa"]'
+    pasos:
+      - accion: resolver_captcha
+      - accion: esperar
+        segundos: 2
+
+  - accion: repetir_hasta
+    selector: 'a[href*="informacion-empresa"]'
+    max_intentos: 2
+    parar_si:
+      campo: nit
+      igual_a: "{{data.nit}}"
+      tolerancia_digito_extra: true
+    pasos:
+      - accion: extraer
+        selector: body
+        patron: "NIT[\\s\\S]{0,30}?(\\d{6,})"
+        salida: nit
+      - accion: extraer
+        selector: body
+        patron: "Tel[ée]fono[\\s\\S]{0,30}?(\\d{7,})"
+        salida: telefono

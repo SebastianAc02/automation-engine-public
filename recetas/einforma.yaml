@@ -1,0 +1,39 @@
+nombre: einforma
+descripcion: Obtener telefono y NIT de una empresa desde eInforma, entrando por el buscador del sitio en vez de la URL directa (evita el bloqueo por "llegar teletransportado")
+motor: camoufox
+pasos:
+  - accion: navegar
+    url: "https://directorio-empresas.einforma.co/"
+
+  - accion: clic
+    selector: "#search"
+
+  - accion: rellenar
+    selector: "#search"
+    valor: "{{data.query}}"
+
+  - accion: esperar
+    segundos: 1
+
+  - accion: presionar
+    selector: "#search"
+    valor: "Enter"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: clic
+    selector: 'a[href*="informacion-empresa"]'
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: extraer
+    selector: body
+    salida: telefono
+    patron: 'Tel[ée]fono[\s\S]{0,80}?(\d{7,})'
+
+  - accion: extraer
+    selector: body
+    salida: nit
+    patron: 'NIT[\s\S]{0,30}?(\d{6,})'

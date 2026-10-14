@@ -1,0 +1,53 @@
+nombre: directorio_informacolombia
+motor: camoufox
+descripcion: >
+  Busca una empresa en el directorio de informacolombia.com y verifica el
+  NIT contra el esperado (con tolerancia de un digito de verificacion de
+  mas al final). Entra a cada candidato con clic real (nunca goto directo:
+  eso dispara captcha en este sitio), y si el NIT no coincide vuelve atras
+  y prueba el siguiente. Requiere data.nombre y data.nit.
+pasos:
+  - accion: navegar
+    url: "https://www.informacolombia.com/directorio-empresas"
+
+  - accion: clic
+    selector: "#razonsocial"
+
+  - accion: rellenar
+    selector: "#razonsocial"
+    valor: "{{data.nombre}}"
+
+  - accion: esperar
+    segundos: 0.8
+
+  - accion: clic
+    selector: "#boton_buscar"
+
+  - accion: esperar
+    segundos: 2
+
+  - accion: condicional
+    # si la busqueda no trajo ningun resultado, puede ser el "demasiadas
+    # peticiones, resuelva el captcha" de este sitio.
+    si_vacio: 'a[href*="informacion-empresa"]'
+    pasos:
+      - accion: resolver_captcha
+      - accion: esperar
+        segundos: 2
+
+  - accion: repetir_hasta
+    selector: 'a[href*="informacion-empresa"]'
+    max_intentos: 2
+    parar_si:
+      campo: nit
+      igual_a: "{{data.nit}}"
+      tolerancia_digito_extra: true
+    pasos:
+      - accion: extraer
+        selector: body
+        patron: "NIT[\\s\\S]{0,30}?(\\d{6,})"
+        salida: nit
+      - accion: extraer
+        selector: body
+        patron: "Tel[ée]fono[\\s\\S]{0,30}?(\\d{7,})"
+        salida: telefono
